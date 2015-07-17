@@ -7,6 +7,14 @@
 
     <string name="app_name">GenericAppDates</string>
 
+    <!--Menu actions-->
+    <string name="action_settings">Settings</string>
+    <string name="action_logout">Logout</string>
+
+    <string name="action_today">Hoy</string>
+    <string name="action_day_view">Vista Dia</string>
+    <string name="action_three_day_view">Vista de 3 dias</string>
+    <string name="action_week_view">Semana</string>
     <!--toolbar titles-->
     <string name="app_toolbar_title_main">Agendar cita</string>
     <string name="app_toolbar_title_login">Iniciar sesion</string>
@@ -15,8 +23,7 @@
     <string name="login_with_password">Login with Password</string>
 
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
-    <string name="action_logout">Logout</string>
+
     <string name="title_activity_splash">SplashActivity</string>
     <string name="title_activity_login">LoginActivity</string>
 </resources>
