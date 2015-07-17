@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.facebook.login.LoginManager;
+import com.firebase.client.AuthData;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
@@ -18,7 +20,11 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 public class MainActivity extends AppCompatActivity {
+
     private Firebase mRef;
+
+    /* Data from the authenticated user */
+    private AuthData mAuthData;
 
     @InjectView(R.id.toolbar)
     Toolbar toolbar;
@@ -74,6 +80,9 @@ public class MainActivity extends AppCompatActivity {
                 mRef.setValue("Clear");
             }
         });
+
+        mAuthData = mRef.getAuth();
+
     }
 
     @Override
@@ -92,6 +101,10 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            return true;
+        }     //noinspection SimplifiableIfStatement
+        if (id == R.id.action_logout) {
+            logout();
             return true;
         }
 
@@ -133,4 +146,23 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+
+    /**
+     * Unauthenticate from Firebase and from providers where necessary.
+     */
+    private void logout() {
+        if (this.mRef != null) {
+            /* logout of Firebase */
+            mRef.unauth();
+            /* Logout of any of the Frameworks. This step is optional, but ensures the user is not logged into
+             * Facebook/Google+ after logging out of Firebase. */
+            if (this.mAuthData.getProvider().equals("facebook")) {
+                /* Logout from Facebook */
+                LoginManager.getInstance().logOut();
+            }
+            finish();
+        }
+    }
+
 }

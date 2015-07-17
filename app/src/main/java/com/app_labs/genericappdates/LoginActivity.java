@@ -18,7 +18,6 @@ import android.widget.Toast;
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
-import com.facebook.login.LoginManager;
 import com.facebook.login.widget.LoginButton;
 import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
@@ -215,24 +214,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     /**
-     * Unauthenticate from Firebase and from providers where necessary.
-     */
-    private void logout() {
-        if (this.mAuthData != null) {
-            /* logout of Firebase */
-            mFirebaseRef.unauth();
-            /* Logout of any of the Frameworks. This step is optional, but ensures the user is not logged into
-             * Facebook/Google+ after logging out of Firebase. */
-            if (this.mAuthData.getProvider().equals("facebook")) {
-                /* Logout from Facebook */
-                LoginManager.getInstance().logOut();
-            }
-            /* Update authenticated user and show login buttons */
-            setAuthenticatedUser(null);
-        }
-    }
-
-    /**
      * This method will attempt to authenticate a user to firebase given an oauth_token (and other
      * necessary parameters depending on the provider)
      */
@@ -256,25 +237,29 @@ public class LoginActivity extends AppCompatActivity {
      */
     private void setAuthenticatedUser(AuthData authData) {
         if (authData != null) {
-            /* Hide all the login buttons */
-            mFacebookLoginButton.setVisibility(View.GONE);
-            mPasswordLoginButton.setVisibility(View.GONE);
-            mLoggedInStatusTextView.setVisibility(View.VISIBLE);
-            /* show a provider specific status text */
-            String name = null;
-            if (authData.getProvider().equals("facebook")
-                    || authData.getProvider().equals("google")
-                    || authData.getProvider().equals("twitter")) {
-                name = (String) authData.getProviderData().get("displayName");
-            } else if (authData.getProvider().equals("anonymous")
-                    || authData.getProvider().equals("password")) {
-                name = authData.getUid();
-            } else {
-                Log.e(TAG, "Invalid provider: " + authData.getProvider());
-            }
-            if (name != null) {
-                mLoggedInStatusTextView.setText("Logged in as " + name + " (" + authData.getProvider() + ")");
-            }
+            mAuthProgressDialog.dismiss();
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+            finish();
+//            /* Hide all the login buttons */
+//            mFacebookLoginButton.setVisibility(View.GONE);
+//            mPasswordLoginButton.setVisibility(View.GONE);
+//            mLoggedInStatusTextView.setVisibility(View.VISIBLE);
+//            /* show a provider specific status text */
+//            String name = null;
+//            if (authData.getProvider().equals("facebook")
+//                    || authData.getProvider().equals("google")
+//                    || authData.getProvider().equals("twitter")) {
+//                name = (String) authData.getProviderData().get("displayName");
+//            } else if (authData.getProvider().equals("anonymous")
+//                    || authData.getProvider().equals("password")) {
+//                name = authData.getUid();
+//            } else {
+//                Log.e(TAG, "Invalid provider: " + authData.getProvider());
+//            }
+//            if (name != null) {
+//                mLoggedInStatusTextView.setText("Logged in as " + name + " (" + authData.getProvider() + ")");
+//            }
         } else {
             /* No authenticated user show all the login buttons */
             mFacebookLoginButton.setVisibility(View.VISIBLE);
@@ -313,6 +298,15 @@ public class LoginActivity extends AppCompatActivity {
         public void onAuthenticated(AuthData authData) {
             mAuthProgressDialog.hide();
             Log.i(TAG, provider + " auth successful");
+            Map<String, String> map = new HashMap<String, String>();
+            map.put("provider", authData.getProvider());
+            if (authData.getProviderData().containsKey("id")) {
+                map.put("provider_id", authData.getProviderData().get("id").toString());
+            }
+            if (authData.getProviderData().containsKey("displayName")) {
+                map.put("displayName", authData.getProviderData().get("displayName").toString());
+            }
+            mFirebaseRef.child("users").child(authData.getUid()).setValue(map);
             setAuthenticatedUser(authData);
         }
 
@@ -351,7 +345,16 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onAuthenticated(AuthData authData) {
                 Toast.makeText(LoginActivity.this, "All is good", Toast.LENGTH_SHORT).show();
-                mAuthProgressDialog.dismiss();
+                Map<String, String> map = new HashMap<String, String>();
+                map.put("provider", authData.getProvider());
+                if (authData.getProviderData().containsKey("id")) {
+                    map.put("provider_id", authData.getProviderData().get("id").toString());
+                }
+                if (authData.getProviderData().containsKey("displayName")) {
+                    map.put("displayName", authData.getProviderData().get("displayName").toString());
+                }
+                mFirebaseRef.child("users").child(authData.getUid()).setValue(map);
+                mAuthProgressDialog.hide();
 
             }
 
