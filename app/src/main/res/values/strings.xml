@@ -1,6 +1,21 @@
 <resources>
+    <string name="firebase_url">https://blazing-inferno-2048.firebaseio.com</string>
+
+    <!-- Your Facebook App ID from your app settings on https://developers.facebook.com/ -->
+    <!-- More details here: https://www.firebase.com/docs/android/guide/login/facebook.html -->
+    <string name="facebook_app_id">1167482719932054</string>
+
     <string name="app_name">GenericAppDates</string>
+
+    <!--toolbar titles-->
+    <string name="app_toolbar_title_main">Agendar cita</string>
+    <string name="app_toolbar_title_login">Iniciar sesion</string>
+
+    <string name="login_with_facebook">Login with Facebook</string>
+    <string name="login_with_password">Login with Password</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_splash">SplashActivity</string>
+    <string name="title_activity_login">LoginActivity</string>
 </resources>
