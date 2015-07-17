@@ -16,7 +16,8 @@
     <string name="action_three_day_view">Vista de 3 dias</string>
     <string name="action_week_view">Semana</string>
     <!--toolbar titles-->
-    <string name="app_toolbar_title_main">Agendar cita</string>
+    <string name="app_toolbar_title_main">AppLabs</string>
+    <string name="app_toolbar_sub_title_main">Agendar cita</string>
     <string name="app_toolbar_title_login">Iniciar sesion</string>
 
     <string name="login_with_facebook">Login with Facebook</string>

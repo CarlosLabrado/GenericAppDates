@@ -354,7 +354,7 @@ public class MainActivity extends AppCompatActivity implements WeekView.MonthCha
      */
     private void setUpToolBar() {
         setSupportActionBar(toolbar);
-        setActionBarTitle(getString(R.string.app_toolbar_title_main), null, false);
+        setActionBarTitle(getString(R.string.app_toolbar_title_main), getString(R.string.app_toolbar_sub_title_main), false);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         // enabling action bar app icon and behaving it as toggle button
         getSupportActionBar().setDefaultDisplayHomeAsUpEnabled(true);
