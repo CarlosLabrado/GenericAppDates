@@ -42,12 +42,22 @@
         <item>@mipmap/ic_launcher</item>
     </array>
 
+    <!--confirmation dialog-->
+    <string name="dialog_title">Agendar una cita</string>
+    <string name="dialog_content">Desea agendar una cita para las </string>
+    <string name="dialog_yes">Agendar</string>
+    <string name="dialog_no">Cancelar</string>
+
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="exit_dialog_message">Esta seguro que quiere salir de la aplicación?</string>
     <string name="exit_dialog_yes">Si</string>
     <string name="exit_dialog_no">No</string>
+
+    <string name="toast_event_overlaps">El evento no puede ser agregado por que la cita se empalma</string>
+
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

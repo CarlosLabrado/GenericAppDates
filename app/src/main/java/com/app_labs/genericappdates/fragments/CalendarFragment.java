@@ -1,9 +1,11 @@
 package com.app_labs.genericappdates.fragments;
 
 
+import android.content.DialogInterface;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -261,6 +263,14 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     }
 
 
+    /**
+     * This is the main thing that handles the drawing of the events, it gets called 3 times
+     * to provide for smooth scrolling, we only want the events for the current month
+     *
+     * @param newYear
+     * @param newMonth
+     * @return the events
+     */
     @Override
     public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
         // Populate the week view with some mEvents.
@@ -276,11 +286,37 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     }
 
     @Override
-    public void onEmptyViewClicked(Calendar calendar) {
-        eventWriter(calendar);
-        Toast.makeText(getActivity(), "Empty thing clicked", Toast.LENGTH_SHORT).show();
-    }
+    public void onEmptyViewClicked(final Calendar calendar) {
 
+        int startingMinute = calendar.get(Calendar.MINUTE);
+        int roundedMinute = round(startingMinute);
+
+        calendar.set(Calendar.MINUTE, roundedMinute);
+
+        if (!eventOverlaps(calendar)) {
+            String eventTime = String.format("%02d:%02d del %s/%d",
+                    calendar.get(Calendar.HOUR_OF_DAY),
+                    calendar.get(Calendar.MINUTE),
+                    calendar.get(Calendar.DAY_OF_MONTH),
+                    calendar.get(Calendar.MONTH) + 1);
+
+            new AlertDialog.Builder(getActivity())
+                    .setTitle(getString(R.string.dialog_title))
+                    .setMessage(getString(R.string.dialog_content) + "\n" + eventTime)
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.dialog_yes), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            eventWriter(calendar);
+                        }
+                    })
+                    .setNegativeButton(getString(R.string.dialog_no), null)
+                    .show();
+        } else {
+            Toast.makeText(getActivity(), R.string.toast_event_overlaps, Toast.LENGTH_SHORT).show();
+        }
+
+
+    }
 
     /**
      * we decided against saving the event on mEvents here and rather we wait for the firebase
@@ -290,16 +326,23 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
      */
     public void eventWriter(Calendar startTime) {
 
-        int startingMinute = startTime.get(Calendar.MINUTE);
-        int roundedMinute = round(startingMinute);
-
-        startTime.set(Calendar.MINUTE, roundedMinute);
-
         Calendar endTime = (Calendar) startTime.clone();
-        endTime.add(Calendar.HOUR, 1);
+        endTime.add(Calendar.HOUR, 1); // events in this scenario are of one hour
 
-        WeekViewEvent event = new WeekViewEvent(1, getEventTitle(startTime), startTime, endTime);
-        event.setColor(getResources().getColor(R.color.event_color_01));
+        String provider = mRef.getAuth().getProvider();
+        String user = "";
+        int color = getResources().getColor(R.color.event_color_03);
+
+        if (provider.equalsIgnoreCase("password")) {
+            user = (String) mRef.getAuth().getProviderData().get("email");
+            color = getResources().getColor(R.color.event_color_01);
+        } else if (provider.equalsIgnoreCase("facebook")) {
+            user = (String) mRef.getAuth().getProviderData().get("displayName");
+            color = getResources().getColor(R.color.event_color_02);
+        }
+
+        WeekViewEvent event = new WeekViewEvent(1, user + " " + getEventTitle(startTime), startTime, endTime);
+        event.setColor(color);
         mRef.push().setValue(event);
     }
 
@@ -342,6 +385,33 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
             if (existingEvent.getStartTime().getTimeInMillis() == eventToRemove.getStartTime().getTimeInMillis()
                     && existingEvent.getEndTime().getTimeInMillis() == eventToRemove.getEndTime().getTimeInMillis()) {
                 mEvents.remove(existingEvent);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the event overlaps
+     *
+     * @param eventToVerify the event that we want to add
+     * @return true if overlaps
+     */
+    private boolean eventOverlaps(Calendar eventToVerify) {
+
+        Calendar endTimeTemp = (Calendar) eventToVerify.clone();
+        endTimeTemp.add(Calendar.HOUR, 1); // events in this scenario are of one hour
+
+        long globalStartTime = 0;
+        long globalEndTime = 0;
+        long newStartTime = eventToVerify.getTimeInMillis();
+        long newEndTime = endTimeTemp.getTimeInMillis();
+        for (WeekViewEvent event : mEvents) {
+            globalStartTime = event.getStartTime().getTimeInMillis();
+            globalEndTime = event.getEndTime().getTimeInMillis();
+            if (newStartTime >= globalStartTime && newEndTime <= globalEndTime
+                    || newEndTime > globalStartTime && newEndTime <= globalEndTime
+                    || newStartTime >= globalStartTime && newStartTime < globalEndTime) {
                 return true;
             }
         }
