@@ -4,7 +4,6 @@ package com.app_labs.genericappdates.fragments;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -18,13 +17,17 @@ import com.alamkanak.weekview.DateTimeInterpreter;
 import com.alamkanak.weekview.WeekView;
 import com.alamkanak.weekview.WeekViewEvent;
 import com.app_labs.genericappdates.R;
+import com.firebase.client.ChildEventListener;
+import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -71,9 +74,6 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         mWeekView = (WeekView) view.findViewById(R.id.weekView);
 
-        mEvents = new ArrayList<WeekViewEvent>();
-        mEventsFake = new ArrayList<WeekViewEvent>();
-
         assignListenersToWeekView();
 
         return view;
@@ -82,7 +82,52 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     @Override
     public void onStart() {
         super.onStart();
-        mRef = new Firebase("https://blazing-inferno-2048.firebaseio.com/mEvents");
+
+        mEvents = new ArrayList<WeekViewEvent>();
+        mEventsFake = new ArrayList<WeekViewEvent>();
+
+        mRef = new Firebase("https://blazing-inferno-2048.firebaseio.com/events");
+
+        mRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                WeekViewEvent newEvent = dataSnapshot.getValue(WeekViewEvent.class);
+                TimeZone timeZone = Calendar.getInstance().getTimeZone();
+                newEvent.getStartTime().setTimeZone(timeZone);
+                newEvent.getEndTime().setTimeZone(timeZone);
+                if (!containsEvents(newEvent)) {
+                    mEvents.add(newEvent);
+                    mWeekView.notifyDatasetChanged();
+                }
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                WeekViewEvent eventToRemove = dataSnapshot.getValue(WeekViewEvent.class);
+                TimeZone timeZone = Calendar.getInstance().getTimeZone();
+                eventToRemove.getStartTime().setTimeZone(timeZone);
+                eventToRemove.getEndTime().setTimeZone(timeZone);
+                if (removeEvent(eventToRemove)) {
+                    mWeekView.notifyDatasetChanged();
+                }
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
 
     }
 
@@ -102,12 +147,12 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         mWeekView.setMonthChangeListener(this);
 
         // Set long press listener for mEvents.
-        mWeekView.setEventLongPressListener(new WeekView.EventLongPressListener() {
-            @Override
-            public void onEventLongPress(WeekViewEvent weekViewEvent, RectF rectF) {
-                Toast.makeText(getActivity(), "Long pressed event: " + weekViewEvent.getName(), Toast.LENGTH_SHORT).show();
-            }
-        });
+//        mWeekView.setEventLongPressListener(new WeekView.EventLongPressListener() {
+//            @Override
+//            public void onEventLongPress(WeekViewEvent weekViewEvent, RectF rectF) {
+//                Toast.makeText(getActivity(), "Long pressed event: " + weekViewEvent.getName(), Toast.LENGTH_SHORT).show();
+//            }
+//        });
 
         // Set up a date time interpreter to interpret how the date and time will be formatted in
         // the week view. This is optional.
@@ -225,17 +270,55 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         Toast.makeText(getActivity(), "Empty thing clicked", Toast.LENGTH_SHORT).show();
     }
 
-    public void eventWriter(Calendar startTime) {
 
-        Log.e("event called", "one time");
+    /**
+     * we decided against saving the event on mEvents here and rather we wait for the firebase
+     * onChildAdded call to save and display, so we just push here
+     *
+     * @param startTime
+     */
+    public void eventWriter(Calendar startTime) {
 
         Calendar endTime = (Calendar) startTime.clone();
         endTime.add(Calendar.HOUR, 1);
 
-        WeekViewEvent event = new WeekViewEvent(3, "Dynamically Created", startTime, endTime);
+        WeekViewEvent event = new WeekViewEvent(1, getEventTitle(startTime), startTime, endTime);
         event.setColor(getResources().getColor(R.color.event_color_01));
-        mEvents.add(event);
+        mRef.push().setValue(event);
+    }
 
-        mWeekView.notifyDatasetChanged();
+    /**
+     * compares events to check if it is already on our list
+     *
+     * @param eventToAdd the new event
+     * @return true if contains
+     */
+    private boolean containsEvents(WeekViewEvent eventToAdd) {
+
+        for (WeekViewEvent existingEvent : mEvents) {
+            if (existingEvent.getStartTime().getTimeInMillis() == eventToAdd.getStartTime().getTimeInMillis()
+                    && existingEvent.getEndTime().getTimeInMillis() == eventToAdd.getEndTime().getTimeInMillis()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * tries to remove an event
+     *
+     * @param eventToRemove the event that is going to be removed
+     * @return true if contains
+     */
+    private boolean removeEvent(WeekViewEvent eventToRemove) {
+
+        for (WeekViewEvent existingEvent : mEvents) {
+            if (existingEvent.getStartTime().getTimeInMillis() == eventToRemove.getStartTime().getTimeInMillis()
+                    && existingEvent.getEndTime().getTimeInMillis() == eventToRemove.getEndTime().getTimeInMillis()) {
+                mEvents.remove(existingEvent);
+                return true;
+            }
+        }
+        return false;
     }
 }
