@@ -185,7 +185,18 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
             @Override
             public String interpretTime(int hour) {
-                return hour > 11 ? (hour - 12) + " PM" : (hour == 0 ? "12 AM" : hour + " AM");
+                if (hour > 11) {
+                    if (hour == 12) {
+                        return "12 PM";
+                    }
+                    return ((hour - 12) + " PM");
+                } else {
+                    if (hour == 0) {
+                        return "12 AM";
+                    } else {
+                        return (hour + " AM");
+                    }
+                }
             }
         });
     }
@@ -279,12 +290,27 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
      */
     public void eventWriter(Calendar startTime) {
 
+        int startingMinute = startTime.get(Calendar.MINUTE);
+        int roundedMinute = round(startingMinute);
+
+        startTime.set(Calendar.MINUTE, roundedMinute);
+
         Calendar endTime = (Calendar) startTime.clone();
         endTime.add(Calendar.HOUR, 1);
 
         WeekViewEvent event = new WeekViewEvent(1, getEventTitle(startTime), startTime, endTime);
         event.setColor(getResources().getColor(R.color.event_color_01));
         mRef.push().setValue(event);
+    }
+
+    /**
+     * rounds to the nearest 10th
+     *
+     * @param num number to be rounded
+     * @return rounded number
+     */
+    private int round(int num) {
+        return (int) (Math.rint((double) num / 10) * 10);
     }
 
     /**
