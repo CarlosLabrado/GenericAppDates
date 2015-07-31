@@ -19,6 +19,7 @@ import com.alamkanak.weekview.DateTimeInterpreter;
 import com.alamkanak.weekview.WeekView;
 import com.alamkanak.weekview.WeekViewEvent;
 import com.app_labs.genericappdates.R;
+import com.app_labs.genericappdates.custom.CalendarEvent;
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
@@ -41,7 +42,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
     private Firebase mRef;
 
-    List<WeekViewEvent> mEvents;
+    List<CalendarEvent> mEvents;
     List<WeekViewEvent> mEventsFake;
 
     private static final int TYPE_DAY_VIEW = 1;
@@ -85,7 +86,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     public void onStart() {
         super.onStart();
 
-        mEvents = new ArrayList<WeekViewEvent>();
+        mEvents = new ArrayList<CalendarEvent>();
         mEventsFake = new ArrayList<WeekViewEvent>();
 
         mRef = new Firebase("https://blazing-inferno-2048.firebaseio.com/events");
@@ -93,7 +94,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         mRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                WeekViewEvent newEvent = dataSnapshot.getValue(WeekViewEvent.class);
+                CalendarEvent newEvent = dataSnapshot.getValue(CalendarEvent.class);
                 TimeZone timeZone = Calendar.getInstance().getTimeZone();
                 newEvent.getStartTime().setTimeZone(timeZone);
                 newEvent.getEndTime().setTimeZone(timeZone);
@@ -110,7 +111,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
-                WeekViewEvent eventToRemove = dataSnapshot.getValue(WeekViewEvent.class);
+                CalendarEvent eventToRemove = dataSnapshot.getValue(CalendarEvent.class);
                 TimeZone timeZone = Calendar.getInstance().getTimeZone();
                 eventToRemove.getStartTime().setTimeZone(timeZone);
                 eventToRemove.getEndTime().setTimeZone(timeZone);
@@ -278,8 +279,15 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         Calendar calendar = Calendar.getInstance();
         int currentMonth = calendar.get(Calendar.MONTH);
 
+        List<WeekViewEvent> returnList = new ArrayList<>();
+
         if (newMonth == currentMonth) {
-            return mEvents;
+            for (CalendarEvent calendarEvent : mEvents) {
+                if (calendarEvent.getProviderId().equalsIgnoreCase("A")) {
+                    returnList.add((WeekViewEvent) calendarEvent);
+                }
+            }
+            return returnList;
         } else {
             return mEventsFake;
         }
@@ -341,7 +349,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
             color = getResources().getColor(R.color.event_color_02);
         }
 
-        WeekViewEvent event = new WeekViewEvent(1, user + " " + getEventTitle(startTime), startTime, endTime);
+        CalendarEvent event = new CalendarEvent(1, user + " " + getEventTitle(startTime), startTime, endTime, user, "A");
         event.setColor(color);
         mRef.push().setValue(event);
     }
@@ -379,9 +387,9 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
      * @param eventToRemove the event that is going to be removed
      * @return true if contains
      */
-    private boolean removeEvent(WeekViewEvent eventToRemove) {
+    private boolean removeEvent(CalendarEvent eventToRemove) {
 
-        for (WeekViewEvent existingEvent : mEvents) {
+        for (CalendarEvent existingEvent : mEvents) {
             if (existingEvent.getStartTime().getTimeInMillis() == eventToRemove.getStartTime().getTimeInMillis()
                     && existingEvent.getEndTime().getTimeInMillis() == eventToRemove.getEndTime().getTimeInMillis()) {
                 mEvents.remove(existingEvent);
@@ -402,16 +410,16 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         Calendar endTimeTemp = (Calendar) eventToVerify.clone();
         endTimeTemp.add(Calendar.HOUR, 1); // events in this scenario are of one hour
 
-        long globalStartTime = 0;
-        long globalEndTime = 0;
+        long globalStartTime = 0L;
+        long globalEndTime = 0L;
         long newStartTime = eventToVerify.getTimeInMillis();
         long newEndTime = endTimeTemp.getTimeInMillis();
-        for (WeekViewEvent event : mEvents) {
+        for (CalendarEvent event : mEvents) {
             globalStartTime = event.getStartTime().getTimeInMillis();
             globalEndTime = event.getEndTime().getTimeInMillis();
-            if (newStartTime >= globalStartTime && newEndTime <= globalEndTime
-                    || newEndTime > globalStartTime && newEndTime <= globalEndTime
-                    || newStartTime >= globalStartTime && newStartTime < globalEndTime) {
+            if ((newStartTime >= globalStartTime && newEndTime <= globalEndTime)
+                    || (newEndTime > globalStartTime && newEndTime <= globalEndTime)
+                    || (newStartTime >= globalStartTime && newStartTime < globalEndTime)) {
                 return true;
             }
         }
