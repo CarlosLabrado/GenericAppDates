@@ -24,10 +24,7 @@ import com.app_labs.genericappdates.fragments.CalendarFragment;
 import com.app_labs.genericappdates.utilities.AndroidBus;
 import com.facebook.login.LoginManager;
 import com.firebase.client.AuthData;
-import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
 import com.squareup.otto.Bus;
 
 import java.util.ArrayList;
@@ -68,20 +65,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        mRef = new Firebase("https://blazing-inferno-2048.firebaseio.com/condition");
-        mRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String newCondition = (String) dataSnapshot.getValue();
-//                textViewCondition.setText(newCondition);
-            }
-
-            @Override
-            public void onCancelled(FirebaseError firebaseError) {
-
-            }
-        });
-
+        mRef = new Firebase("https://blazing-inferno-2048.firebaseio.com/");
         mAuthData = mRef.getAuth();
 
     }

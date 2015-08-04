@@ -6,6 +6,7 @@ import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,6 +21,7 @@ import com.alamkanak.weekview.WeekView;
 import com.alamkanak.weekview.WeekViewEvent;
 import com.app_labs.genericappdates.R;
 import com.app_labs.genericappdates.custom.CalendarEvent;
+import com.firebase.client.AuthData;
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
@@ -91,6 +93,14 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         mRef = new Firebase("https://blazing-inferno-2048.firebaseio.com/events");
 
+        mRef.addAuthStateListener(new Firebase.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(AuthData authData) {
+
+                Log.e("authentication", "what happened?" + authData.toString());
+            }
+        });
+
         mRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -128,6 +138,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
             @Override
             public void onCancelled(FirebaseError firebaseError) {
+                Log.e("firebaseError", firebaseError.getDetails());
 
             }
         });
@@ -349,7 +360,10 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
             color = getResources().getColor(R.color.event_color_02);
         }
 
-        CalendarEvent event = new CalendarEvent(1, user + " " + getEventTitle(startTime), startTime, endTime, user, "A");
+
+        String author = mRef.getAuth().getUid();
+
+        CalendarEvent event = new CalendarEvent(1, user + " " + getEventTitle(startTime), startTime, endTime, user, "A", author);
         event.setColor(color);
         mRef.push().setValue(event);
     }
