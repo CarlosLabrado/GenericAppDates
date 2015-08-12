@@ -40,7 +40,9 @@ import butterknife.InjectView;
 /**
  * The calendar fragment
  */
-public class CalendarFragment extends Fragment implements WeekView.MonthChangeListener, WeekView.EmptyViewClickListener {
+public class CalendarFragment extends Fragment implements WeekView.MonthChangeListener, WeekView.EmptyViewClickListener, WeekView.EventClickListener {
+
+    private static final String TAG = CalendarFragment.class.getSimpleName();
 
     private Firebase mRef;
 
@@ -105,6 +107,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 CalendarEvent newEvent = dataSnapshot.getValue(CalendarEvent.class);
+                newEvent.setFirebaseKey(dataSnapshot.getKey());
                 TimeZone timeZone = Calendar.getInstance().getTimeZone();
                 newEvent.getStartTime().setTimeZone(timeZone);
                 newEvent.getEndTime().setTimeZone(timeZone);
@@ -147,12 +150,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
     public void assignListenersToWeekView() {
         // Show a toast message about the touched event.
-        mWeekView.setOnEventClickListener(new WeekView.EventClickListener() {
-            @Override
-            public void onEventClick(WeekViewEvent weekViewEvent, RectF rectF) {
-                Toast.makeText(getActivity(), "Clicked " + weekViewEvent.getName(), Toast.LENGTH_SHORT).show();
-            }
-        });
+        mWeekView.setOnEventClickListener(this);
         // use this to add a new event
         mWeekView.setEmptyViewClickListener(this);
 
@@ -363,7 +361,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         String author = mRef.getAuth().getUid();
 
-        CalendarEvent event = new CalendarEvent(1, user + " " + getEventTitle(startTime), startTime, endTime, user, "A", author);
+        CalendarEvent event = new CalendarEvent(1, user + " " + getEventTitle(startTime), startTime, endTime, user, "A", author, null);
         event.setColor(color);
         mRef.push().setValue(event);
     }
@@ -438,5 +436,28 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
             }
         }
         return false;
+    }
+
+
+    /**
+     * Handles the clicks on existing events
+     *
+     * @param weekViewEvent the week view object
+     * @param rectF         no idea
+     */
+    @Override
+    public void onEventClick(WeekViewEvent weekViewEvent, RectF rectF) {
+        Toast.makeText(getActivity(), "Clicked " + weekViewEvent.getName(), Toast.LENGTH_SHORT).show();
+        CalendarEvent calendarEvent = (CalendarEvent) weekViewEvent;
+
+        String myUid = mRef.getAuth().getUid();
+        String eventUid = calendarEvent.getAuthor();
+        if (myUid.equalsIgnoreCase(eventUid)) { // if the author of the event is the same as the current logged user
+            Firebase deleteRef = mRef.child(calendarEvent.getFirebaseKey());
+            deleteRef.removeValue();
+        } else {
+            Toast.makeText(getActivity(), "you cant delete this because is not yours", Toast.LENGTH_SHORT).show();
+        }
+
     }
 }

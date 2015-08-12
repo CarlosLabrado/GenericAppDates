@@ -42,6 +42,12 @@
         <item>@mipmap/ic_launcher</item>
     </array>
 
+    <string-array name="my_facebook_permissions">
+        <item>public_profile</item>
+        <item>user_friends</item>
+        <item>email</item>
+    </string-array>
+
     <!--confirmation dialog-->
     <string name="dialog_title">Agendar una cita</string>
     <string name="dialog_content">Desea agendar una cita para las </string>

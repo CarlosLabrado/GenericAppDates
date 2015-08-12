@@ -11,28 +11,40 @@ public class CalendarEvent extends WeekViewEvent {
     String userId;
     String providerId;
     String author;
+    String firebaseKey;
 
     public CalendarEvent() {
     }
 
-    public CalendarEvent(String userId, String providerId, String author) {
+    public CalendarEvent(String userId, String providerId, String author, String firebaseKey) {
         this.userId = userId;
         this.providerId = providerId;
         this.author = author;
+        this.firebaseKey = firebaseKey;
     }
 
-    public CalendarEvent(long id, String name, int startYear, int startMonth, int startDay, int startHour, int startMinute, int endYear, int endMonth, int endDay, int endHour, int endMinute, String userId, String providerId, String author) {
+    public CalendarEvent(long id, String name, int startYear, int startMonth, int startDay, int startHour, int startMinute, int endYear, int endMonth, int endDay, int endHour, int endMinute, String userId, String providerId, String author, String firebaseKey) {
         super(id, name, startYear, startMonth, startDay, startHour, startMinute, endYear, endMonth, endDay, endHour, endMinute);
         this.userId = userId;
         this.providerId = providerId;
         this.author = author;
+        this.firebaseKey = firebaseKey;
     }
 
-    public CalendarEvent(long id, String name, Calendar startTime, Calendar endTime, String userId, String providerId, String author) {
+    public CalendarEvent(long id, String name, Calendar startTime, Calendar endTime, String userId, String providerId, String author, String firebaseKey) {
         super(id, name, startTime, endTime);
         this.userId = userId;
         this.providerId = providerId;
         this.author = author;
+        this.firebaseKey = firebaseKey;
+    }
+
+    public String getFirebaseKey() {
+        return firebaseKey;
+    }
+
+    public void setFirebaseKey(String firebaseKey) {
+        this.firebaseKey = firebaseKey;
     }
 
     public String getAuthor() {

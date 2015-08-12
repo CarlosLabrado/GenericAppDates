@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
     ListView mDrawerList;
     @InjectView(R.id.drawer_layout)
     DrawerLayout mDrawerLayout;
-    @InjectView(R.id.linearLayoutDrawer)
+    @InjectView(R.id.relativeLayoutDrawer)
     RelativeLayout mDrawerRelativeLayout;
 
     @Override

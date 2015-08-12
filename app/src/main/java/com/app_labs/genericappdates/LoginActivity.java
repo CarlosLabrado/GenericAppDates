@@ -110,11 +110,16 @@ public class LoginActivity extends AppCompatActivity {
         /* Load the Facebook login button and set up the tracker to monitor access token changes */
         mFacebookCallbackManager = CallbackManager.Factory.create();
         mFacebookLoginButton = (LoginButton) findViewById(R.id.login_with_facebook);
+        mFacebookLoginButton.setReadPermissions(getResources().getStringArray(R.array.my_facebook_permissions));
         mFacebookAccessTokenTracker = new AccessTokenTracker() {
             @Override
             protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
                 Log.i(TAG, "Facebook.AccessTokenTracker.OnCurrentAccessTokenChanged");
-                LoginActivity.this.onFacebookAccessTokenChange(currentAccessToken);
+                if (currentAccessToken.getDeclinedPermissions().size() != 0) {
+                    Toast.makeText(getApplicationContext(), "No podemos seguir adelante sin los permisos necesarios", Toast.LENGTH_SHORT).show();
+                } else {
+                    LoginActivity.this.onFacebookAccessTokenChange(currentAccessToken);
+                }
             }
         };
 
@@ -305,6 +310,9 @@ public class LoginActivity extends AppCompatActivity {
             }
             if (authData.getProviderData().containsKey("displayName")) {
                 map.put("displayName", authData.getProviderData().get("displayName").toString());
+            }
+            if (authData.getProviderData().containsKey("email")) {
+                map.put("email", authData.getProviderData().get("email").toString());
             }
             mFirebaseRef.child("users").child(authData.getUid()).setValue(map);
             setAuthenticatedUser(authData);

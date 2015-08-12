@@ -30,7 +30,7 @@
          If you're not building against API 17 or higher, use
          android:layout_gravity="left" instead. -->
     <RelativeLayout
-        android:id="@+id/linearLayoutDrawer"
+        android:id="@+id/relativeLayoutDrawer"
         android:layout_width="304dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
