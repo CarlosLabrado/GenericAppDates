@@ -56,6 +56,8 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
     private int preferredStartingHour = 8;
 
+    private android.app.AlertDialog mEventDetailDialog = null;
+
     @InjectView(R.id.weekView)
     WeekView mWeekView;
 
@@ -453,11 +455,24 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         String myUid = mRef.getAuth().getUid();
         String eventUid = calendarEvent.getAuthor();
         if (myUid.equalsIgnoreCase(eventUid)) { // if the author of the event is the same as the current logged user
-            Firebase deleteRef = mRef.child(calendarEvent.getFirebaseKey());
-            deleteRef.removeValue();
+            inflateEventDetailDialog(calendarEvent);
+//            Firebase deleteRef = mRef.child(calendarEvent.getFirebaseKey());
+//            deleteRef.removeValue();
         } else {
             Toast.makeText(getActivity(), "you cant delete this because is not yours", Toast.LENGTH_SHORT).show();
         }
+
+    }
+
+    private void inflateEventDetailDialog(CalendarEvent calendarEvent) {
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        View view = inflater.inflate(R.layout.dialog_event_detail, null);
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getActivity());
+        builder.setView(view);
+
+        builder.setTitle("Detalles de la cita");
+
+        mEventDetailDialog = builder.show();
 
     }
 }
