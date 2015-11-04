@@ -67,5 +67,8 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="snack_date_erased">La cita fue borrada</string>
+    <string name="snack_date_undo">Deshacer</string>
+    <string name="dialog_buildt_in_title">Detalles de la cita</string>
 
 </resources>

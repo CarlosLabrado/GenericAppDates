@@ -4,6 +4,8 @@ package com.app_labs.genericappdates.fragments;
 import android.content.DialogInterface;
 import android.graphics.RectF;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -14,6 +16,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alamkanak.weekview.DateTimeInterpreter;
@@ -308,17 +312,12 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     public void onEmptyViewClicked(final Calendar calendar) {
 
         int startingMinute = calendar.get(Calendar.MINUTE);
-        int roundedMinute = round(startingMinute);
+        int roundedMinute = roundTo30(startingMinute);
 
         calendar.set(Calendar.MINUTE, roundedMinute);
 
         if (!eventOverlaps(calendar)) {
-            String eventTime = String.format("%02d:%02d del %s/%d",
-                    calendar.get(Calendar.HOUR_OF_DAY),
-                    calendar.get(Calendar.MINUTE),
-                    calendar.get(Calendar.DAY_OF_MONTH),
-                    calendar.get(Calendar.MONTH) + 1);
-
+            String eventTime = calendarToStringFormat(calendar);
             new AlertDialog.Builder(getActivity())
                     .setTitle(getString(R.string.dialog_title))
                     .setMessage(getString(R.string.dialog_content) + "\n" + eventTime)
@@ -346,7 +345,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     public void eventWriter(Calendar startTime) {
 
         Calendar endTime = (Calendar) startTime.clone();
-        endTime.add(Calendar.HOUR, 1); // events in this scenario are of one hour
+        endTime.add(Calendar.MINUTE, 30); // events in this scenario are of 30 minutes
 
         String provider = mRef.getAuth().getProvider();
         String user = "";
@@ -376,6 +375,19 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
      */
     private int round(int num) {
         return (int) (Math.rint((double) num / 10) * 10);
+    }
+
+    /**
+     * This will only allow us to make events every half hour
+     * @param num minute selected
+     * @return 0 or 30
+     */
+    private int roundTo30(int num) {
+        if (num >= 0 && num < 30) {
+            return 0;
+        } else {
+            return 30;
+        }
     }
 
     /**
@@ -420,9 +432,13 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
      * @return true if overlaps
      */
     private boolean eventOverlaps(Calendar eventToVerify) {
+        int startingMinute = eventToVerify.get(Calendar.MINUTE);
+        int roundedMinute = roundTo30(startingMinute);
+
+        eventToVerify.set(Calendar.MINUTE, roundedMinute);
 
         Calendar endTimeTemp = (Calendar) eventToVerify.clone();
-        endTimeTemp.add(Calendar.HOUR, 1); // events in this scenario are of one hour
+        endTimeTemp.add(Calendar.MINUTE, 30); // events in this scenario are of 30 minutes
 
         long globalStartTime = 0L;
         long globalEndTime = 0L;
@@ -449,30 +465,102 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
      */
     @Override
     public void onEventClick(WeekViewEvent weekViewEvent, RectF rectF) {
-        Toast.makeText(getActivity(), "Clicked " + weekViewEvent.getName(), Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getActivity(), "Clicked " + weekViewEvent.getName(), Toast.LENGTH_SHORT).show();
         CalendarEvent calendarEvent = (CalendarEvent) weekViewEvent;
 
         String myUid = mRef.getAuth().getUid();
         String eventUid = calendarEvent.getAuthor();
         if (myUid.equalsIgnoreCase(eventUid)) { // if the author of the event is the same as the current logged user
             inflateEventDetailDialog(calendarEvent);
-//            Firebase deleteRef = mRef.child(calendarEvent.getFirebaseKey());
-//            deleteRef.removeValue();
+
         } else {
             Toast.makeText(getActivity(), "you cant delete this because is not yours", Toast.LENGTH_SHORT).show();
         }
 
     }
 
-    private void inflateEventDetailDialog(CalendarEvent calendarEvent) {
+    private void inflateEventDetailDialog(final CalendarEvent calendarEvent) {
+        final CalendarEvent[] temporalEvent = new CalendarEvent[1];
         LayoutInflater inflater = getActivity().getLayoutInflater();
-        View view = inflater.inflate(R.layout.dialog_event_detail, null);
+        final View view = inflater.inflate(R.layout.dialog_event_detail, null);
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getActivity());
         builder.setView(view);
 
-        builder.setTitle("Detalles de la cita");
+        builder.setTitle(R.string.dialog_buildt_in_title);
 
         mEventDetailDialog = builder.show();
 
+        TextView textViewDetailDay = (TextView) view.findViewById(R.id.textView_detail_day);
+        TextView textViewDetailProviderName = (TextView) view.findViewById(R.id.textView_detail_provider_name);
+
+
+        textViewDetailDay.setText(calendarToStringFormat(calendarEvent.getStartTime()));
+        textViewDetailProviderName.setText(calendarEvent.getProviderId());
+
+        FloatingActionButton fabUpArrow = (FloatingActionButton) view.findViewById(R.id.fab_up_arrow);
+        FloatingActionButton fabDownArrow = (FloatingActionButton) view.findViewById(R.id.fab_down_arrow);
+
+        fabUpArrow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                temporalEvent[0] = subtract30Min(calendarEvent);
+            }
+        });
+
+        Button buttonErase = (Button) view.findViewById(R.id.buttonErase);
+        buttonErase.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Firebase deleteRef = mRef.child(calendarEvent.getFirebaseKey());
+                deleteRef.removeValue();
+                mEventDetailDialog.dismiss();
+
+                Snackbar
+                        .make(mWeekView, getResources().getString(R.string.snack_date_erased), Snackbar.LENGTH_LONG)
+                        .setAction(R.string.snack_date_undo, new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                mRef.push().setValue(calendarEvent);
+                            }
+                        })
+                        .show();
+            }
+        });
+
+//        mEventDetailDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+//            @Override
+//            public void onDismiss(DialogInterface dialog) {
+//
+//            }
+//        });
+
+
+    }
+
+    private CalendarEvent subtract30Min(CalendarEvent calendarEvent) {
+        Calendar calendarStart = calendarEvent.getStartTime();
+        Calendar calendarEnd = calendarEvent.getEndTime();
+
+        calendarStart.add(Calendar.MINUTE, -30);
+        calendarEnd.add(Calendar.MINUTE, -30);
+        calendarEvent.setStartTime(calendarStart);
+        calendarEvent.setEndTime(calendarEnd);
+
+        return calendarEvent;
+    }
+
+    /**
+     * formats the calendar to the way we want
+     *
+     * @param calendar calendar to format
+     * @return formatted string
+     */
+    public String calendarToStringFormat(Calendar calendar) {
+
+        return String.format("%02d:%02d del %s/%d",
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                calendar.get(Calendar.DAY_OF_MONTH),
+                calendar.get(Calendar.MONTH) + 1);
     }
 }
