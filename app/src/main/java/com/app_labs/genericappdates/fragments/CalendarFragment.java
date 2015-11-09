@@ -38,8 +38,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.OnClick;
 
 /**
  * The calendar fragment
@@ -62,8 +63,15 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
     private android.app.AlertDialog mEventDetailDialog = null;
 
-    @InjectView(R.id.weekView)
+    private int mInt = 1;
+
+    @Bind(R.id.weekView)
     WeekView mWeekView;
+
+    @OnClick(R.id.button)
+    public void buttonClicked() {
+        mWeekView.notifyDatasetChanged();
+    }
 
     public CalendarFragment() {
         // Required empty public constructor
@@ -83,7 +91,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_calendar, container, false);
 
-        ButterKnife.inject(view);
+        ButterKnife.bind(this, view);
 
         mWeekView = (WeekView) view.findViewById(R.id.weekView);
 
@@ -299,11 +307,13 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         if (newMonth == currentMonth) {
             for (CalendarEvent calendarEvent : mEvents) {
                 if (calendarEvent.getProviderId().equalsIgnoreCase("A")) {
-                    returnList.add((WeekViewEvent) calendarEvent);
+                    returnList.add(calendarEvent);
                 }
             }
+            Log.i(TAG, "onMonthChange " + returnList.size() + returnList.toString());
             return returnList;
         } else {
+            Log.i(TAG, "onMonthChange FAKE" + mEventsFake.toString());
             return mEventsFake;
         }
     }
@@ -362,7 +372,8 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         String author = mRef.getAuth().getUid();
 
-        CalendarEvent event = new CalendarEvent(1, user + " " + getEventTitle(startTime), startTime, endTime, user, "A", author, null);
+        CalendarEvent event = new CalendarEvent(mInt, user + " " + getEventTitle(startTime), startTime, endTime, user, "A", author, null);
+        mInt++;
         event.setColor(color);
         mRef.push().setValue(event);
     }
@@ -379,6 +390,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
     /**
      * This will only allow us to make events every half hour
+     *
      * @param num minute selected
      * @return 0 or 30
      */

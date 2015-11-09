@@ -26,8 +26,8 @@ import com.firebase.client.FirebaseError;
 import java.util.HashMap;
 import java.util.Map;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 
 
 /**
@@ -46,7 +46,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
 
-    @InjectView(R.id.toolbar)
+    @Bind(R.id.toolbar)
     Toolbar toolbar;
 
     /* *************************************
@@ -98,7 +98,7 @@ public class LoginActivity extends AppCompatActivity {
         /* Load the view and display it */
         setContentView(R.layout.activity_login);
 
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
 
         /**toolBar **/
         setUpToolBar();

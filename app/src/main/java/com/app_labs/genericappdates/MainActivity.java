@@ -29,8 +29,8 @@ import com.squareup.otto.Bus;
 
 import java.util.ArrayList;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -51,14 +51,14 @@ public class MainActivity extends AppCompatActivity {
     private ActionBarDrawerToggle mDrawerToggle;
     private CharSequence mTitle;
 
-    @InjectView(R.id.toolbar)
+    @Bind(R.id.toolbar)
     Toolbar toolbar;
 
-    @InjectView(R.id.list_slidermenu)
+    @Bind(R.id.list_slidermenu)
     ListView mDrawerList;
-    @InjectView(R.id.drawer_layout)
+    @Bind(R.id.drawer_layout)
     DrawerLayout mDrawerLayout;
-    @InjectView(R.id.relativeLayoutDrawer)
+    @Bind(R.id.relativeLayoutDrawer)
     RelativeLayout mDrawerRelativeLayout;
 
     @Override
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
 
         bus = new AndroidBus();
         bus.register(this);
