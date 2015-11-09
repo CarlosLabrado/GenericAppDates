@@ -326,25 +326,29 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         calendar.set(Calendar.MINUTE, roundedMinute);
 
-        if (!eventOverlaps(calendar)) {
-            String eventTime = calendarToStringFormat(calendar);
-            new AlertDialog.Builder(getActivity())
-                    .setTitle(getString(R.string.dialog_title))
-                    .setMessage(getString(R.string.dialog_content) + "\n" + eventTime)
-                    .setCancelable(false)
-                    .setPositiveButton(getString(R.string.dialog_yes), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            eventWriter(calendar);
-                        }
-                    })
-                    .setNegativeButton(getString(R.string.dialog_no), null)
-                    .show();
+        if (!eventIsInThePast(calendar)) { // not in the past
+            if (!eventOverlaps(calendar)) {
+                String eventTime = calendarToStringFormat(calendar);
+                new AlertDialog.Builder(getActivity())
+                        .setTitle(getString(R.string.dialog_title))
+                        .setMessage(getString(R.string.dialog_content) + "\n" + eventTime)
+                        .setCancelable(false)
+                        .setPositiveButton(getString(R.string.dialog_yes), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                eventWriter(calendar);
+                            }
+                        })
+                        .setNegativeButton(getString(R.string.dialog_no), null)
+                        .show();
+            } else {
+                Toast.makeText(getActivity(), R.string.toast_event_overlaps, Toast.LENGTH_SHORT).show();
+            }
         } else {
-            Toast.makeText(getActivity(), R.string.toast_event_overlaps, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), R.string.toast_event_in_the_past, Toast.LENGTH_SHORT).show();
+
         }
-
-
     }
+
 
     /**
      * we decided against saving the event on mEvents here and rather we wait for the firebase
@@ -466,6 +470,23 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
             }
         }
         return false;
+    }
+
+    /**
+     * Don't let creation of events in the past
+     *
+     * @param eventToVerify
+     * @return
+     */
+    private boolean eventIsInThePast(Calendar eventToVerify) {
+        Calendar now = Calendar.getInstance();
+        long nowLong = now.getTimeInMillis();
+        long eventLong = eventToVerify.getTimeInMillis();
+        if (eventLong < nowLong) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 

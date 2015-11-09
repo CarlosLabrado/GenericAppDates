@@ -63,6 +63,7 @@
     <string name="exit_dialog_no">No</string>
 
     <string name="toast_event_overlaps">El evento no puede ser agregado por que la cita se empalma</string>
+    <string name="toast_event_in_the_past">No puede agregar eventos en el pasado</string>
 
 
     <!-- TODO: Remove or change this placeholder text -->
