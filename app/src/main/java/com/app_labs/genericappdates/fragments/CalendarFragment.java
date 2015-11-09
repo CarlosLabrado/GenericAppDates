@@ -1,6 +1,7 @@
 package com.app_labs.genericappdates.fragments;
 
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.RectF;
 import android.os.Bundle;
@@ -30,6 +31,8 @@ import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
+import com.firebase.client.MutableData;
+import com.firebase.client.Transaction;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -68,9 +71,15 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     @Bind(R.id.weekView)
     WeekView mWeekView;
 
+    private long mEventIdCounter;
+
+    ProgressDialog mProgressDialog;
+
     @OnClick(R.id.button)
     public void buttonClicked() {
-        mWeekView.notifyDatasetChanged();
+
+//        incrementCounter(calendar);
+//        mWeekView.notifyDatasetChanged();
     }
 
     public CalendarFragment() {
@@ -319,7 +328,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     }
 
     @Override
-    public void onEmptyViewClicked(final Calendar calendar) {
+    public void onEmptyViewClicked(Calendar calendar) {
 
         int startingMinute = calendar.get(Calendar.MINUTE);
         int roundedMinute = roundTo30(startingMinute);
@@ -328,18 +337,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         if (!eventIsInThePast(calendar)) { // not in the past
             if (!eventOverlaps(calendar)) {
-                String eventTime = calendarToStringFormat(calendar);
-                new AlertDialog.Builder(getActivity())
-                        .setTitle(getString(R.string.dialog_title))
-                        .setMessage(getString(R.string.dialog_content) + "\n" + eventTime)
-                        .setCancelable(false)
-                        .setPositiveButton(getString(R.string.dialog_yes), new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                eventWriter(calendar);
-                            }
-                        })
-                        .setNegativeButton(getString(R.string.dialog_no), null)
-                        .show();
+                incrementCounter(calendar); // tries to increase the counter then calls to inflate the dialog
             } else {
                 Toast.makeText(getActivity(), R.string.toast_event_overlaps, Toast.LENGTH_SHORT).show();
             }
@@ -347,6 +345,57 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
             Toast.makeText(getActivity(), R.string.toast_event_in_the_past, Toast.LENGTH_SHORT).show();
 
         }
+    }
+
+    /**
+     * We need this counter to assign a unique long id to each of the events
+     *
+     * @param calendar to pass to the event writer
+     */
+    public void incrementCounter(final Calendar calendar) {
+        Firebase incrementRef = new Firebase("https://blazing-inferno-2048.firebaseio.com/counter");
+        mProgressDialog = ProgressDialog.show(getActivity(), getString(R.string.DialogTitle), getString(R.string.DialogContentPleaseWait), true);
+        incrementRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(final MutableData currentData) {
+                if (currentData.getValue() == null) {
+                    currentData.setValue(1);
+                } else {
+                    currentData.setValue((Long) currentData.getValue() + 1);
+                }
+
+                return Transaction.success(currentData);
+            }
+
+            @Override
+            public void onComplete(FirebaseError firebaseError, boolean committed, DataSnapshot currentData) {
+                if (firebaseError != null) {
+                    Log.d(TAG, "Firebase counter increment failed.");
+                    mProgressDialog.dismiss();
+                    Toast.makeText(getActivity(), R.string.error_increment_counter, Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.d(TAG, "Firebase counter increment succeeded.");
+                    mEventIdCounter = (long) currentData.getValue();
+                    showCreateEventDialog(calendar);
+                    mProgressDialog.dismiss();
+                }
+            }
+        });
+    }
+
+    private void showCreateEventDialog(final Calendar calendar) {
+        String eventTime = calendarToStringFormat(calendar);
+        new AlertDialog.Builder(getActivity())
+                .setTitle(getString(R.string.dialog_title))
+                .setMessage(getString(R.string.dialog_content) + "\n" + eventTime)
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.dialog_yes), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        eventWriter(calendar);
+                    }
+                })
+                .setNegativeButton(getString(R.string.dialog_no), null)
+                .show();
     }
 
 
@@ -376,8 +425,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         String author = mRef.getAuth().getUid();
 
-        CalendarEvent event = new CalendarEvent(mInt, user + " " + getEventTitle(startTime), startTime, endTime, user, "A", author, null);
-        mInt++;
+        CalendarEvent event = new CalendarEvent(mEventIdCounter, user + " " + getEventTitle(startTime), startTime, endTime, user, "A", author, null);
         event.setColor(color);
         mRef.push().setValue(event);
     }
@@ -432,14 +480,19 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     private boolean removeEvent(CalendarEvent eventToRemove) {
 
         for (CalendarEvent existingEvent : mEvents) {
-            if (existingEvent.getStartTime().getTimeInMillis() == eventToRemove.getStartTime().getTimeInMillis()
-                    && existingEvent.getEndTime().getTimeInMillis() == eventToRemove.getEndTime().getTimeInMillis()) {
-                mEvents.remove(existingEvent);
-                return true;
+            String existingAuthor = existingEvent.getAuthor();
+            String removeAuthor = eventToRemove.getAuthor();
+            if (existingAuthor.equals(removeAuthor)) {
+                if (existingEvent.getStartTime().getTimeInMillis() == eventToRemove.getStartTime().getTimeInMillis()
+                        && existingEvent.getEndTime().getTimeInMillis() == eventToRemove.getEndTime().getTimeInMillis()) {
+                    mEvents.remove(existingEvent);
+                    return true;
+                }
             }
         }
         return false;
     }
+
 
     /**
      * Checks if the event overlaps
@@ -511,6 +564,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
         }
 
     }
+
 
     private void inflateEventDetailDialog(final CalendarEvent calendarEvent) {
         final CalendarEvent[] temporalEvent = new CalendarEvent[1];

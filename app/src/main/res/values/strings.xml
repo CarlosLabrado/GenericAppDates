@@ -71,5 +71,8 @@
     <string name="snack_date_erased">La cita fue borrada</string>
     <string name="snack_date_undo">Deshacer</string>
     <string name="dialog_buildt_in_title">Detalles de la cita</string>
+    <string name="DialogTitle">Apartando Lugar</string>
+    <string name="DialogContentPleaseWait">Por favor espere…</string>
+    <string name="error_increment_counter">We couldn\'t communicate with the server, something must be wrong, please try again.</string>
 
 </resources>
