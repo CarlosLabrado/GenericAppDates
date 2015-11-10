@@ -74,6 +74,12 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
     ProgressDialog mProgressDialog;
 
+    private int mOpeningHourWeek;
+    private int mClosingHourWeek;
+    private int mOpeningHourWeekend;
+    private int mClosingHourWeekend;
+    private ArrayList<Integer> mWorkingDays;
+
     @OnClick(R.id.button)
     public void buttonClicked() {
 
@@ -114,6 +120,21 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         mEvents = new ArrayList<CalendarEvent>();
         mEventsFake = new ArrayList<WeekViewEvent>();
+
+        mOpeningHourWeek = 8;
+        mClosingHourWeek = 13;
+
+        mOpeningHourWeekend = 10;
+        mClosingHourWeekend = 13;
+
+        String workingDays = "2,3,4,5,6,7"; // Monday to friday
+
+        mWorkingDays = new ArrayList<>();
+        String[] split = workingDays.split(",");
+        for (String singleDay : split) {
+            mWorkingDays.add(Integer.parseInt(singleDay));
+        }
+
 
         mRef = new Firebase("https://blazing-inferno-2048.firebaseio.com/events");
 
@@ -324,10 +345,8 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
                     returnList.add(calendarEvent);
                 }
             }
-            Log.i(TAG, "onMonthChange " + returnList.size() + returnList.toString());
             return returnList;
         } else {
-            Log.i(TAG, "onMonthChange FAKE" + mEventsFake.toString());
             return mEventsFake;
         }
     }
@@ -340,15 +359,31 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         calendar.set(Calendar.MINUTE, roundedMinute);
 
-        if (!eventIsInThePast(calendar)) { // not in the past
-            if (!eventOverlaps(calendar)) {
-                incrementCounter(calendar); // tries to increase the counter then calls to inflate the dialog
+        if (isOnWorkingHours(calendar)) {
+            if (!eventIsInThePast(calendar)) { // not in the past
+                if (!eventOverlaps(calendar)) {
+                    incrementCounter(calendar); // tries to increase the counter then calls to inflate the dialog
+                } else {
+                    Toast.makeText(getActivity(), R.string.toast_event_overlaps, Toast.LENGTH_SHORT).show();
+                }
             } else {
-                Toast.makeText(getActivity(), R.string.toast_event_overlaps, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), R.string.toast_event_in_the_past, Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(getActivity(), R.string.toast_event_in_the_past, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), R.string.toast_no_service_hours, Toast.LENGTH_SHORT).show();
 
+        }
+    }
+
+    public boolean isOnWorkingHours(Calendar calendar) {
+        int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+        int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+        if (mWorkingDays.contains(currentDay)) {
+            if (currentDay == 7 || currentDay == 1) {
+                return currentHour >= mOpeningHourWeekend && currentHour < mClosingHourWeekend;
+            } else return currentHour >= mOpeningHourWeek && currentHour < mClosingHourWeek;
+        } else {
+            return false;
         }
     }
 
@@ -377,7 +412,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
                 if (firebaseError != null) {
                     Log.d(TAG, "Firebase counter increment failed.");
                     mProgressDialog.dismiss();
-                    Toast.makeText(getActivity(), R.string.error_increment_counter, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), R.string.toast_error_increment_counter, Toast.LENGTH_SHORT).show();
                 } else {
                     Log.d(TAG, "Firebase counter increment succeeded.");
                     mEventIdCounter = (long) currentData.getValue();
@@ -565,7 +600,7 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
             inflateEventDetailDialog(calendarEvent);
 
         } else {
-            Toast.makeText(getActivity(), "you cant delete this because is not yours", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), R.string.toast_can_not_delete, Toast.LENGTH_SHORT).show();
         }
 
     }

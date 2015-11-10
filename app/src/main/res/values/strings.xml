@@ -73,7 +73,9 @@
     <string name="dialog_buildt_in_title">Detalles de la cita</string>
     <string name="DialogTitle">Apartando Lugar</string>
     <string name="DialogContentPleaseWait">Por favor espere…</string>
-    <string name="error_increment_counter">We couldn\'t communicate with the server, something must be wrong, please try again.</string>
+    <string name="toast_error_increment_counter">We couldn\'t communicate with the server, something must be wrong, please try again.</string>
     <string name="event_reserved">Reservado</string>
+    <string name="toast_no_service_hours">No hay servicio a estas horas, por favor seleccione otra hora.</string>
+    <string name="toast_can_not_delete">you cant delete this because is not yours</string>
 
 </resources>
