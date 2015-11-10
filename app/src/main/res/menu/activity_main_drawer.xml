@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_places"
+            android:icon="@mipmap/ic_launcher"
+            android:title="@string/nav_drawer_item_calendar"/>
+        <item
+            android:id="@+id/nav_balance"
+            android:icon="@mipmap/ic_launcher"
+            android:title="@string/nav_drawer_item_settings"/>
+    </group>
+</menu>

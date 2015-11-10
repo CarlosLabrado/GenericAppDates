@@ -2,24 +2,23 @@ package com.app_labs.genericappdates;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.res.TypedArray;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.transition.TransitionInflater;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 
-import com.app_labs.genericappdates.custom.navigationDrawer.NavDrawerItem;
-import com.app_labs.genericappdates.custom.navigationDrawer.NavDrawerListAdapter;
 import com.app_labs.genericappdates.fragments.CalendarFragment;
 import com.app_labs.genericappdates.utilities.AndroidBus;
 import com.facebook.login.LoginManager;
@@ -27,12 +26,12 @@ import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 import com.squareup.otto.Bus;
 
-import java.util.ArrayList;
+import java.util.Stack;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private Firebase mRef;
 
@@ -45,21 +44,17 @@ public class MainActivity extends AppCompatActivity {
 
     // Navigation Drawer
     private String[] navMenuTitles;
-    private TypedArray navMenuIcons;
-    private ArrayList<NavDrawerItem> navDrawerItems;
-    private NavDrawerListAdapter adapter;
-    private ActionBarDrawerToggle mDrawerToggle;
-    private CharSequence mTitle;
+
+    private Stack<Integer> mDrawerStack;
+    boolean isFirstRun = true;
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.list_slidermenu)
-    ListView mDrawerList;
     @Bind(R.id.drawer_layout)
     DrawerLayout mDrawerLayout;
-    @Bind(R.id.relativeLayoutDrawer)
-    RelativeLayout mDrawerRelativeLayout;
+    @Bind(R.id.nav_view)
+    NavigationView mNavigationView;
 
     @Override
     protected void onStart() {
@@ -80,6 +75,8 @@ public class MainActivity extends AppCompatActivity {
         bus = new AndroidBus();
         bus.register(this);
 
+        mDrawerStack = new Stack<>();
+
         /**toolBar **/
         setUpToolBar();
 
@@ -88,6 +85,17 @@ public class MainActivity extends AppCompatActivity {
         Firebase.setAndroidContext(this);
 
         if (savedInstanceState == null) {
+            /**
+             * This dummy fragment is to prevent the transition error when popping the fragment backStack
+             * Error: Attempt to invoke virtual method 'boolean android.support.v4.app.Fragment.getAllowReturnTransitionOverlap()' on a null object reference
+             * https://code.google.com/p/android/issues/detail?id=82832
+             */
+            FragmentManager fragmentManager = getSupportFragmentManager();
+
+            fragmentManager.beginTransaction()
+                    .add(R.id.container, new Fragment())
+                    .addToBackStack("dummy")
+                    .commit();
             // on first time display view for first nav item
             reactToDrawerClick(0);
         }
@@ -101,49 +109,33 @@ public class MainActivity extends AppCompatActivity {
         // load slide menu items
         navMenuTitles = getResources().getStringArray(R.array.nav_drawer_items);
 
-        // nav drawer icons from resources
-        navMenuIcons = getResources()
-                .obtainTypedArray(R.array.nav_drawer_icons);
-        navDrawerItems = new ArrayList<NavDrawerItem>();
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
 
-        // Home
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons.getResourceId(0, -1)));
-        // Store
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons.getResourceId(1, -1)));
-        // Contact
-        navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons.getResourceId(2, -1)));
-        // Recycle the typed array
-        navMenuIcons.recycle();
-        mDrawerList.setOnItemClickListener(new SlideMenuClickListener());
+        mNavigationView.setNavigationItemSelectedListener(this);
+        setCheckedDrawerItem(0);
+    }
 
-        // setting the nav drawer list adapter
-        adapter = new NavDrawerListAdapter(getApplicationContext(),
-                navDrawerItems);
-        mDrawerList.setAdapter(adapter);
+    private void setCheckedDrawerItem(int item) {
+        mNavigationView.getMenu().getItem(item).setChecked(true);
+    }
 
-        mDrawerToggle = new ActionBarDrawerToggle(
-                this,
-                mDrawerLayout,
-                toolbar,
-                R.string.navigation_drawer_open, R.string.navigation_drawer_close
-        ) {
-            public void onDrawerClosed(View view) {
-                setActionBarTitle(mTitle.toString(), null, false);
-                // calling onPrepareOptionsMenu() to show action bar icons
-                invalidateOptionsMenu();
-            }
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem menuItem) {
+        int id = menuItem.getItemId();
 
-            public void onDrawerOpened(View drawerView) {
-                mDrawerList.setItemChecked(1, true);
-                mDrawerList.setSelection(1);
-                setActionBarTitle(getResources().getString(R.string.app_name), null, false);
-                // calling onPrepareOptionsMenu() to hide action bar icons
-                invalidateOptionsMenu();
-            }
-        };
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        if (id == R.id.nav_places) {
+            reactToDrawerClick(0);
+        } else if (id == R.id.nav_balance) {
+            reactToDrawerClick(1);
+        }
 
-        mDrawerToggle.syncState();
+        mDrawerLayout.closeDrawer(GravityCompat.START);
+        return true;
     }
 
     /**
@@ -165,12 +157,31 @@ public class MainActivity extends AppCompatActivity {
     private void reactToDrawerClick(int position) {
         // update the main content by replacing fragments
         Fragment fragment = null;
+
+        mDrawerStack.push(position);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        boolean addToBackStack = true;
+
         boolean isFragmentTransition = false;
         switch (position) {
             case 0:
-//                Intent intent = new Intent(this, StoreActivity.class);
-//                startActivity(intent);
-                fragment = new CalendarFragment();
+                /**
+                 * All this block prevents the first (Home) fragment to be recreated every time
+                 * you click on it, we have to do this, because of the inner nested fragments
+                 */
+                Fragment lastFragment;
+                if (!isFirstRun) {
+                    int backStackCount = fragmentManager.getBackStackEntryCount();
+                    lastFragment = fragmentManager.getFragments().get(backStackCount - 1);
+                    if (lastFragment instanceof CalendarFragment) {
+                        addToBackStack = false;
+                    } else {
+                        fragment = fragmentManager.getFragments().get(1);
+                    }
+                } else {
+                    fragment = new CalendarFragment();
+                    isFirstRun = false;
+                }
                 break;
             case 1:
 //                fragment = new FirstFragment();
@@ -179,35 +190,31 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
 
-        if (fragment != null) {
+        if (fragment != null && addToBackStack) { // addToBackStack will only be false if is the Home fragment
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 fragment.setEnterTransition(TransitionInflater.from(this).inflateTransition(android.R.transition.explode));
                 fragment.setExitTransition(TransitionInflater.from(this).inflateTransition(android.R.transition.fade));
             }
-            FragmentManager fragmentManager = getSupportFragmentManager();
+            String backStateName = fragment.getClass().getName();
+
             fragmentManager.beginTransaction()
-                    .addToBackStack(null)
+                    .addToBackStack(backStateName)
                     .replace(R.id.container, fragment)
                     .commit();
             Log.d(TAG, "fragment added " + fragment.getTag());
 
-            mDrawerList.setItemChecked(position, true);
-            mDrawerList.setSelection(position);
             setTitle(navMenuTitles[position]);
             // update selected item and title, then close the drawer
-            mDrawerLayout.closeDrawer(mDrawerRelativeLayout);
+            mDrawerLayout.closeDrawer(GravityCompat.START);
         } else if (!isFragmentTransition) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
             Log.i(TAG, "Action");
 
         } else {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
             // error in creating fragment
             Log.e(TAG, "Error in creating fragment");
         }
-    }
-
-    @Override
-    public void setTitle(CharSequence title) {
-        mTitle = title;
     }
 
     /**
@@ -270,8 +277,13 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     public void onBackPressed() {
+        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+        }
         int fragments = getSupportFragmentManager().getBackStackEntryCount();
-        if (fragments > 1) {
+        if (fragments > 2) {
+            mDrawerStack.pop();
+            setCheckedDrawerItem(mDrawerStack.peek());
             super.onBackPressed();
         } else {
             new AlertDialog.Builder(this)
@@ -288,5 +300,4 @@ public class MainActivity extends AppCompatActivity {
                     .show();
         }
     }
-
 }
