@@ -74,5 +74,6 @@
     <string name="DialogTitle">Apartando Lugar</string>
     <string name="DialogContentPleaseWait">Por favor espere…</string>
     <string name="error_increment_counter">We couldn\'t communicate with the server, something must be wrong, please try again.</string>
+    <string name="event_reserved">Reservado</string>
 
 </resources>

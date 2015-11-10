@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.RectF;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -54,6 +53,8 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
     private Firebase mRef;
 
+    private boolean isAdmin = false;
+
     List<CalendarEvent> mEvents;
     List<WeekViewEvent> mEventsFake;
 
@@ -65,8 +66,6 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
     private int preferredStartingHour = 8;
 
     private android.app.AlertDialog mEventDetailDialog = null;
-
-    private int mInt = 1;
 
     @Bind(R.id.weekView)
     WeekView mWeekView;
@@ -135,6 +134,12 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
                 newEvent.getStartTime().setTimeZone(timeZone);
                 newEvent.getEndTime().setTimeZone(timeZone);
                 if (!containsEvents(newEvent)) {
+                    String user = mRef.getAuth().getUid();
+                    if (!isAdmin) {
+                        if (!newEvent.getAuthor().equals(user)) {
+                            newEvent.setName(getResources().getString(R.string.event_reserved));
+                        }
+                    }
                     mEvents.add(newEvent);
                     mWeekView.notifyDatasetChanged();
                 }
@@ -567,7 +572,6 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
 
     private void inflateEventDetailDialog(final CalendarEvent calendarEvent) {
-        final CalendarEvent[] temporalEvent = new CalendarEvent[1];
         LayoutInflater inflater = getActivity().getLayoutInflater();
         final View view = inflater.inflate(R.layout.dialog_event_detail, null);
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getActivity());
@@ -583,16 +587,6 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 
         textViewDetailDay.setText(calendarToStringFormat(calendarEvent.getStartTime()));
         textViewDetailProviderName.setText(calendarEvent.getProviderId());
-
-        FloatingActionButton fabUpArrow = (FloatingActionButton) view.findViewById(R.id.fab_up_arrow);
-        FloatingActionButton fabDownArrow = (FloatingActionButton) view.findViewById(R.id.fab_down_arrow);
-
-        fabUpArrow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                temporalEvent[0] = subtract30Min(calendarEvent);
-            }
-        });
 
         Button buttonErase = (Button) view.findViewById(R.id.buttonErase);
         buttonErase.setOnClickListener(new View.OnClickListener() {
@@ -622,18 +616,6 @@ public class CalendarFragment extends Fragment implements WeekView.MonthChangeLi
 //        });
 
 
-    }
-
-    private CalendarEvent subtract30Min(CalendarEvent calendarEvent) {
-        Calendar calendarStart = calendarEvent.getStartTime();
-        Calendar calendarEnd = calendarEvent.getEndTime();
-
-        calendarStart.add(Calendar.MINUTE, -30);
-        calendarEnd.add(Calendar.MINUTE, -30);
-        calendarEvent.setStartTime(calendarStart);
-        calendarEvent.setEndTime(calendarEnd);
-
-        return calendarEvent;
     }
 
     /**

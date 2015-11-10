@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
               android:orientation="vertical"
               android:paddingBottom="10dp"
               android:paddingLeft="20dp"
@@ -55,52 +54,6 @@
                 tools:text="Carlows"/>
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight=".3"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/fab_up_arrow"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:src="@mipmap/ic_arrow_up_bold_white_24dp"
-                app:backgroundTint="@color/color_primary"
-                app:borderWidth="0dp"
-                app:elevation="6dp"
-                app:pressedTranslationZ="12dp"/>
-
-            <TextView
-                android:id="@+id/textView"
-                style="@style/TextViewTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="30dp"
-                android:text="-30 min"
-                android:textSize="15sp"/>
-
-            <TextView
-                android:id="@+id/textView2"
-                style="@style/TextViewTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="+30 min"
-                android:textSize="15sp"/>
-
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/fab_down_arrow"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:src="@mipmap/ic_arrow_down_bold_white_24dp"
-                app:backgroundTint="@color/color_primary"
-                app:borderWidth="0dp"
-                app:elevation="6dp"
-                app:pressedTranslationZ="12dp"/>
-        </LinearLayout>
     </LinearLayout>
 
 
@@ -117,11 +70,11 @@
             android:text="Borrar"/>
 
         <Button
-            android:id="@+id/buttonModify"
+            android:id="@+id/buttonAccept"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:text="Modificar"/>
+            android:text="Aceptar"/>
     </LinearLayout>
 
 </LinearLayout>

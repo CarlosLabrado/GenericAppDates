@@ -39,6 +39,6 @@
         android:text="New Button"
         android:id="@+id/button"
         android:layout_gravity="right|bottom"
-        android:visibility="visible"/>
+        android:visibility="gone"/>
 
 </FrameLayout>
